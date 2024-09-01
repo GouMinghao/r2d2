@@ -7,6 +7,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+MODEL_EXPORT = True
 
 class BaseNet (nn.Module):
     """ Takes a list of images as input, and returns for each image:
@@ -21,18 +22,31 @@ class BaseNet (nn.Module):
             return F.softmax(ux, dim=1)[:,1:2]
 
     def normalize(self, x, ureliability, urepeatability):
-        return dict(descriptors = F.normalize(x, p=2, dim=1),
-                    repeatability = self.softmax( urepeatability ),
-                    reliability = self.softmax( ureliability ))
+        if MODEL_EXPORT:
+            return F.normalize(x, p=2, dim=1), self.softmax( urepeatability ), self.softmax( ureliability )
+        else:
+            return dict(descriptors = F.normalize(x, p=2, dim=1),
+                        repeatability = self.softmax( urepeatability ),
+                        reliability = self.softmax( ureliability ))
+
 
     def forward_one(self, x):
         raise NotImplementedError()
 
+    # def forward(self, imgs, **kw):
+    #     res = [self.forward_one(img) for img in imgs]
+    #     # merge all dictionaries into one
+    #     res = {k:[r[k] for r in res if k in r] for k in {k for r in res for k in r}}
+    #     return dict(res, imgs=imgs, **kw)
+
     def forward(self, imgs, **kw):
-        res = [self.forward_one(img) for img in imgs]
-        # merge all dictionaries into one
-        res = {k:[r[k] for r in res if k in r] for k in {k for r in res for k in r}}
-        return dict(res, imgs=imgs, **kw)
+        if MODEL_EXPORT:
+            return self.forward_one(imgs)
+        else:
+            res = [self.forward_one(img) for img in imgs]
+            # merge all dictionaries into one
+            res = {k:[r[k] for r in res if k in r] for k in {k for r in res for k in r}}
+            return dict(res, imgs=imgs, **kw)
 
 
 

@@ -2,28 +2,14 @@
 # CC BY-NC-SA 3.0
 # Available only for non-commercial use
 
-
-import os, pdb
 from PIL import Image
 import numpy as np
 import torch
 
-from tools import common
-from tools.dataloader import norm_RGB
-from nets.patchnet import *
-
-
-def load_network(model_fn): 
-    checkpoint = torch.load(model_fn)
-    print("\n>> Creating net = " + checkpoint['net']) 
-    net = eval(checkpoint['net'])
-    nb_of_weights = common.model_size(net)
-    print(f" ( Model size: {nb_of_weights/1000:.0f}K parameters )")
-
-    # initialization
-    weights = checkpoint['state_dict']
-    net.load_state_dict({k.replace('module.',''):v for k,v in weights.items()})
-    return net.eval()
+from r2d2.tools import common
+from r2d2.tools.dataloader import norm_RGB
+from r2d2.tools.load_net import load_network
+from r2d2.nets.patchnet import *
 
 
 class NonMaxSuppression (torch.nn.Module):
